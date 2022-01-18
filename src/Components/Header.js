@@ -1,4 +1,5 @@
 import styled from "styled-components";
+import { useEffect } from "react";
 import { auth, provider } from "../firebase";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
@@ -7,6 +8,7 @@ import {
   selectUserEmail,
   selectUserPhoto,
   setUserLoginDetails,
+  setSignOutState,
 } from "../features/user/userSlice";
 
 function Header(props) {
@@ -15,13 +17,32 @@ function Header(props) {
   const userName = useSelector(selectUserName);
   const userPhoto = useSelector(selectUserPhoto);
 
+  useEffect(() => {
+    auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        setUser(user);
+        history("/home");
+      }
+    });
+  }, [userName]);
+
   const handleAuth = () => {
-    auth
-      .signInWithPopup(provider)
-      .then((result) => {
-        setUser(result.user);
-      })
-      .catch((error) => alert(error.message));
+    if (!userName) {
+      auth
+        .signInWithPopup(provider)
+        .then((result) => {
+          setUser(result.user);
+        })
+        .catch((error) => alert(error.message));
+    } else if (userName) {
+      auth
+        .signOut()
+        .then(() => {
+          dispatch(setSignOutState());
+          history("/");
+        })
+        .catch((err) => alert(err.message));
+    }
   };
 
   const setUser = (user) => {
@@ -162,15 +183,15 @@ const NavMenu = styled.div`
         transform-origin: left center;
         transform: scaleX(0);
         transition: all 250ms cubic-bezier(0.25, 0.46, 0.45, 0.94);
-        visibility: hidden;
-        width: auto;
+        /* visibility: hidden; */
+        /* width: auto; */
       }
     }
 
     &:hover {
       span:before {
         transform: scaleX(1);
-        visibility: visible;
+        /* visibility: visible; */
         opacity: 1 !important;
       }
     }
